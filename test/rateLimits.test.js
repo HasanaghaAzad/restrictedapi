@@ -24,17 +24,18 @@ async function requestServerFewTimesC(url, headers, repeats, afterEachStep, onFi
     onFinish();
   }
 }
+async function delKeys(keys) {
+  const redisClient = redis.createClient({
+    url: `redis://localhost:${process.env.REDIS_PORT}`,
+  });
+  redisClient.on('error', (err) => console.log('Redis Client Error', err));
+  await redisClient.connect();
+  redisClient.del(keys);
+}
 
 describe('Testing rate limits', () => {
   describe('GET public /', () => {
-    beforeEach(async ()=> {
-      const redisClient = redis.createClient({
-        url: `redis://localhost:${process.env.REDIS_PORT}`,
-      });
-      redisClient.on('error', (err) => console.log('Redis Client Error', err));
-      await redisClient.connect();
-      redisClient.del(['::ffff:127.0.0.1:/', '::1:/']);
-    });
+    beforeEach(async ()=> await delKeys(['::ffff:127.0.0.1:/', '::1:/']));
 
 
     it(`should succeed in first ${process.env.IP_LIMIT_PER_HOUR} requests`, (done) => {
@@ -76,14 +77,7 @@ describe('Testing rate limits', () => {
   describe('GET private /private', () => {
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJ1c2VyIiwiaWF0IjoxNjY0Mzc4NDU4fQ.M5vX6XLzY-8YqFeP8YkSPPIwHmMSA_uUqm3QbQXOAYA';
 
-    beforeEach(async ()=> {
-      const redisClient = redis.createClient({
-        url: `redis://localhost:${process.env.REDIS_PORT}`,
-      });
-      redisClient.on('error', (err) => console.log('Redis Client Error', err));
-      await redisClient.connect();
-      redisClient.del(token+':/private');
-    });
+    beforeEach(async ()=> await delKeys(token+':/private'));
 
 
     it(`should succeed in first ${process.env.TOKEN_LIMIT_PER_HOUR} requests`, (done) => {
