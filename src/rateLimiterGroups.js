@@ -1,5 +1,6 @@
-const rateLimiter = require('./rateLimiter');
-require('dotenv').config();
+import rateLimiter from './rateLimiter.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 async function applyRateLimiter(req, weight, key, limit) {
   return await rateLimiter({
@@ -24,4 +25,4 @@ const limiterPrivate = async (req, res, weight) => {
   return await applyRateLimiter(req, weight, key, limit);
 };
 
-module.exports = {limiterPublic, limiterPrivate};
+export default {limiterPublic, limiterPrivate};

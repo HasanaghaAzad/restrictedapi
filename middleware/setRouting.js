@@ -1,5 +1,6 @@
-const auth = require('./auth');
-const {limiterPublic, limiterPrivate} = require('../src/rateLimiterGroups.js');
+import auth from './auth.js';
+import rateLimiterGroups from '../src/rateLimiterGroups.js';
+const {limiterPublic, limiterPrivate} = rateLimiterGroups;
 
 
 function setRouting({weight, access, title}) {
@@ -33,4 +34,4 @@ function setRouting({weight, access, title}) {
     next();
   };
 }
-module.exports = setRouting;
+export default setRouting;

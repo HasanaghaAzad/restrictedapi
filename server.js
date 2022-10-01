@@ -1,12 +1,13 @@
-const express = require('express');
+import express, {json} from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
 
-require('dotenv').config();
 const PORT = process.env.PORT || 7777;
 
-const setRouting = require('./middleware/setRouting');
+import setRouting from './middleware/setRouting.js';
 
 const app = express();
-app.use(express.json());
+app.use(json());
 
 
 app.get('/', setRouting({weight: 1, access: 'public', title: 'Home'}));
@@ -30,4 +31,4 @@ const start = () => {
 
 start();
 
-module.exports = app;
+export default app;

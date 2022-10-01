@@ -1,43 +1,45 @@
-const chai = require('chai');
-const chaiHttp = require('chai-http');
-const server = require('../server');
-const redis = require('redis');
+import chai from 'chai';
+import app from '../server.js';
+import {createClient} from 'redis';
 
-const expect = chai.expect;
+import dotenv from 'dotenv';
+dotenv.config();
 
-require('dotenv').config();
+// eslint-disable-next-line
+import chaiHttp from 'chai-http';
 
 chai.use(chaiHttp);
 
-const request = chai.request(server).keepOpen();
+const expect = chai.expect;
+const requester = chai.request(app).keepOpen();
 
-async function requestServerFewTimes(
+function requestServerFewTimes(
     url,
     headers,
     repeats,
     afterEachStep,
     onFinish,
 ) {
-  response = await request.get(url).set(headers);
-  afterEachStep(response);
-  repeats--;
-
-  if (repeats) {
-    if (response.status === 200) {
-      return await requestServerFewTimes(
-          url,
-          headers,
-          repeats,
-          afterEachStep,
-          onFinish,
-      );
+  requester.get(url).set(headers).end(function(err, res) {
+    afterEachStep(res);
+    repeats--;
+    if (repeats) {
+      if (res.status === 200) {
+        return requestServerFewTimes(
+            url,
+            headers,
+            repeats,
+            afterEachStep,
+            onFinish,
+        );
+      }
+    } else {
+      onFinish();
     }
-  } else {
-    onFinish();
-  }
+  });
 }
 async function delKeys(keys) {
-  const redisClient = redis.createClient({
+  const redisClient = createClient({
     url: `redis://localhost:${process.env.REDIS_PORT}`,
   });
   redisClient.on('error', (err) => console.log('Redis Client Error', err));
@@ -68,7 +70,7 @@ describe('Testing rate limits', () => {
             expect(res.status).to.equal(200);
           },
           () => {
-            request.get('/').end(function(err, res) {
+            requester.get('/').end(function(err, res) {
               expect(res.status).to.equal(429);
               done();
             });
@@ -108,8 +110,7 @@ describe('Testing rate limits', () => {
             expect(res.status).to.equal(200);
           },
           () => {
-            request
-                .get(url)
+            requester.get(url)
                 .set(header)
                 .end((err, res) => {
                   expect(res.status).to.equal(429);
@@ -118,5 +119,8 @@ describe('Testing rate limits', () => {
           },
       );
     });
+  });
+  after(()=>{
+    requester.close();
   });
 });

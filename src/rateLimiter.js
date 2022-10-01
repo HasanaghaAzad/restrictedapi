@@ -1,5 +1,5 @@
-const moment = require('moment');
-const redis = require('redis');
+import moment from 'moment';
+import {createClient} from 'redis';
 
 const rateLimiter = async ({
   redisConfig,
@@ -9,7 +9,7 @@ const rateLimiter = async ({
   req,
 }) => {
   const WINDOW_SIZE_IN_HOURS = 1;
-  const redisClient = redis.createClient({
+  const redisClient = createClient({
     url: `redis://localhost:${redisConfig.port}`,
   });
 
@@ -64,4 +64,4 @@ const rateLimiter = async ({
     return true;
   }
 };
-module.exports = rateLimiter;
+export default rateLimiter;

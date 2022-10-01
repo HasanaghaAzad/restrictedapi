@@ -1,6 +1,7 @@
 {
 	"name": "restricted-api",
 	"version": "1.0.0",
+	"type": "module",
 	"description": "API on NodeJS with a rate limiter",
 	"main": "index.js",
 	"scripts": {
