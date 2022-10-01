@@ -1,59 +1,22 @@
 const express = require('express');
-const {limiterPublic, limiterPrivate} = require('./src/rateLimiterGroups.js');
 
 require('dotenv').config();
 const PORT = process.env.PORT || 7777;
 
-const auth = require('./middleware/auth');
+const setRouting = require('./middleware/setRouting');
 
 const app = express();
 app.use(express.json());
 
-app.get(
-    '/',
-    (req, res, next) => limiterPublic(req, res, next, 1),
-    (req, res) => {
-      res.status(200).send('Welcome to the public page');
-    },
-);
 
-app.get(
-    '/2',
-    (req, res, next) => limiterPublic(req, res, next, 2),
-    (req, res) => {
-      res.status(200).send('Welcome to the public page 2');
-    },
-);
-app.get(
-    '/3',
-    (req, res, next) => limiterPublic(req, res, next, 3),
-    (req, res) => {
-      res.status(200).send('Welcome to the public page 3');
-    },
-);
-app.get(
-    '/4',
-    (req, res, next) => limiterPublic(req, res, next, 4),
-    (req, res) => {
-      res.status(200).send('Welcome to the public page 4');
-    },
-);
-app.get(
-    '/5',
-    (req, res, next) => limiterPublic(req, res, next, 5),
-    (req, res) => {
-      res.status(200).send('Welcome to the public page 5');
-    },
-);
+app.get('/', setRouting({weight: 1, access: 'public', title: 'Home'}));
+app.get('/2', setRouting({weight: 2, access: 'public', title: 'Second'}));
+app.get('/3', setRouting({weight: 3, access: 'public', title: 'Third'}));
+app.get('/4', setRouting({weight: 4, access: 'public', title: 'Fourth'}));
+app.get('/5', setRouting({weight: 5, access: 'public', title: 'Fifth'}));
 
-app.get(
-    '/private',
-    auth,
-    (req, res, next) => limiterPrivate(req, res, next, 1),
-    (req, res) => {
-      res.status(200).send('Welcome to the private page');
-    },
-);
+app.get('/private', setRouting({weight: 1, access: 'private', title: 'Private'}));
+
 
 const start = () => {
   try {
