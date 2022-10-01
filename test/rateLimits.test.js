@@ -11,6 +11,20 @@ chai.use(chaiHttp);
 
 const request = chai.request(server).keepOpen();
 
+async function requestServerFewTimesC(url, headers, repeats, afterEachStep, onFinish) {
+  response = await request.get(url).set(headers);
+  afterEachStep(response);
+  repeats--;
+
+  if (repeats) {
+    if (response.status===200) {
+      return await requestServerFewTimesC(url, headers, repeats, afterEachStep, onFinish);
+    }
+  } else {
+    onFinish();
+  }
+}
+
 describe('Testing rate limits', () => {
   describe('GET public /', () => {
     beforeEach(async ()=> {
@@ -19,27 +33,20 @@ describe('Testing rate limits', () => {
       });
       redisClient.on('error', (err) => console.log('Redis Client Error', err));
       await redisClient.connect();
-      redisClient.del('::ffff:127.0.0.1:/');
-      redisClient.del('::1:/');
+      redisClient.del(['::ffff:127.0.0.1:/', '::1:/']);
     });
 
+
     it(`should succeed in first ${process.env.IP_LIMIT_PER_HOUR} requests`, (done) => {
-      async function requestServerFewTimes(repeat, onFinish) {
-        response = await request.get('/').set({
-          'content-type': 'application/json',
-        });
-        repeat--;
-        if (repeat !== 0) {
-          if (response.status==200) {
-            return requestServerFewTimes(repeat, onFinish);
-          }
-        } else {
-          expect(response.status).to.equal(200);
-          onFinish();
-        }
-      }
-      requestServerFewTimes(
+      requestServerFewTimesC(
+          '/',
+          {
+            'content-type': 'application/json',
+          },
           process.env.IP_LIMIT_PER_HOUR,
+          (res)=>{
+            expect(res.status).to.equal(200);
+          },
           () => done(),
       );
     });
@@ -53,18 +60,15 @@ describe('Testing rate limits', () => {
         done();
       }
 
-      function requestServerFewTimes(repeat, onFinish) {
-        request.get('/').end(() => {
-          repeat--;
-          if (repeat !== 0) {
-            requestServerFewTimes(repeat, onFinish);
-          } else {
-            onFinish();
-          }
-        });
-      }
-      requestServerFewTimes(
+      requestServerFewTimesC(
+          '/',
+          {
+            'content-type': 'application/json',
+          },
           process.env.IP_LIMIT_PER_HOUR,
+          (res)=>{
+            expect(res.status).to.equal(200);
+          },
           afterLimitReached,
       );
     });
@@ -83,23 +87,15 @@ describe('Testing rate limits', () => {
 
 
     it(`should succeed in first ${process.env.TOKEN_LIMIT_PER_HOUR} requests`, (done) => {
-      async function requestServerFewTimes(repeat, onFinish) {
-        response = await request.get('/private').set({
-          'content-type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        });
-        repeat--;
-        if (repeat !== 0) {
-          if (response.status==200) {
-            return requestServerFewTimes(repeat, onFinish);
-          }
-        } else {
-          expect(response.status).to.equal(200);
-          onFinish();
-        }
-      }
-      requestServerFewTimes(
+      requestServerFewTimesC('/private',
+          {
+            'content-type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           process.env.TOKEN_LIMIT_PER_HOUR,
+          (res)=>{
+            expect(res.status).to.equal(200);
+          },
           () => done(),
       );
     });
@@ -115,24 +111,15 @@ describe('Testing rate limits', () => {
         done();
       }
 
-      function requestServerFewTimes(repeat, onFinish) {
-        request
-            .get('/private')
-            .set({
-              'content-type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            })
-            .end(() => {
-              repeat--;
-              if (repeat !== 0) {
-                requestServerFewTimes(repeat, onFinish);
-              } else {
-                onFinish();
-              }
-            });
-      }
-      requestServerFewTimes(
+      requestServerFewTimesC('/private',
+          {
+            'content-type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           process.env.TOKEN_LIMIT_PER_HOUR,
+          (res)=>{
+            expect(res.status).to.equal(200);
+          },
           afterLimitReached,
       );
     });
