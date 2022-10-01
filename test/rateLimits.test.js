@@ -5,7 +5,6 @@ import {createClient} from 'redis';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// eslint-disable-next-line
 import chaiHttp from 'chai-http';
 
 chai.use(chaiHttp);
