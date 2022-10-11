@@ -1,3 +1,6 @@
+Rate limiter on NodeJS.
+Settings are in .env file.
+Start time for each windows is current date and hour (minutes:00);
 ## curl for /private page:
 
 JWT token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJ1c2VyIiwiaWF0IjoxNjY0Mzc4NDU4fQ.M5vX6XLzY-8YqFeP8YkSPPIwHmMSA_uUqm3QbQXOAYA

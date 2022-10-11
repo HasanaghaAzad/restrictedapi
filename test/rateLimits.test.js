@@ -1,5 +1,6 @@
 import chai from 'chai';
 import app from '../server.js';
+import moment from 'moment';
 import {createClient} from 'redis';
 
 import dotenv from 'dotenv';
@@ -11,7 +12,7 @@ chai.use(chaiHttp);
 
 const expect = chai.expect;
 const requester = chai.request(app).keepOpen();
-
+const currentDateAndHour = moment().startOf('hour');
 function requestServerFewTimes(
     url,
     headers,
@@ -52,7 +53,7 @@ describe('Testing rate limits', () => {
     const header = {};
     const limit = process.env.IP_LIMIT_PER_HOUR;
 
-    beforeEach(async () => await delKeys(['::ffff:127.0.0.1:/', '::1:/']));
+    beforeEach(async () => await delKeys(['::ffff:127.0.0.1:/:'+currentDateAndHour, '::1:/:'+currentDateAndHour]));
 
     it(`should succeed in first ${limit} requests`, (done) => {
       requestServerFewTimes(url, header, limit,
@@ -86,7 +87,7 @@ describe('Testing rate limits', () => {
     };
     const limit = process.env.TOKEN_LIMIT_PER_HOUR;
 
-    beforeEach(async () => await delKeys(token + ':/private'));
+    beforeEach(async () => await delKeys(token + ':/private:'+currentDateAndHour));
 
     it(`should succeed in first ${limit} requests`, (done) => {
       requestServerFewTimes(
